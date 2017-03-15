@@ -1,0 +1,27 @@
+// Matrices 
+uniform mat4 u_mvmatrix; 
+uniform mat4 u_mvpmatrix; 
+
+// Attributes 
+attribute vec4 a_position; 
+attribute vec3 a_normal; 
+
+// Varyings 
+varying vec3 v_ecNormal; 
+
+attribute vec2 uv_coords;
+varying vec2 uv_coords_varying;
+
+void main() { 
+    // Define position and normal in model coordinates 
+    vec4 mcPosition = a_position; 
+    vec3 mcNormal = a_normal; 
+	uv_coords_varying = uv_coords;
+
+    // Calculate and normalize eye space normal 
+    vec3 ecNormal = vec3(u_mvmatrix * vec4(mcNormal, 0.0)); 
+    ecNormal = ecNormal / length(ecNormal); 
+    v_ecNormal = ecNormal; 
+
+    gl_Position = u_mvpmatrix * mcPosition; 
+}

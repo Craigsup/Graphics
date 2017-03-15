@@ -1,0 +1,40 @@
+// Light
+uniform vec3 direction; 
+uniform vec3 halfplane; 
+uniform vec4 ambientColor; 
+uniform vec4 diffuseColor; 
+uniform vec4 specularColor; 
+
+// Material
+uniform vec4 ambientFactor; 
+uniform vec4 diffuseFactor; 
+uniform vec4 specularFactor; 
+uniform float shininess; 
+
+uniform sampler2D map;
+varying vec2 uv_coords_varying;
+
+varying vec3 v_ecNormal; 
+
+void main() {  
+    // Normalize v_ecNormal 
+    vec3 ecNormal = v_ecNormal / length(v_ecNormal); 
+
+    float ecNormalDotLightDirection = max(0.0, dot(ecNormal, direction)); 
+    float ecNormalDotLightHalfplane = max(0.0, dot(ecNormal, halfplane)); 
+
+    // Calculate ambient light 
+    vec4 ambientLight = ambientColor * ambientFactor; 
+
+    // Calculate diffuse light 
+    vec4 diffuseLight = ecNormalDotLightDirection * diffuseColor * diffuseFactor; 
+
+    // Calculate specular light 
+    vec4 specularLight = vec4(0.0); 
+    if (ecNormalDotLightHalfplane > 0.0) { 
+        specularLight = pow(ecNormalDotLightHalfplane, shininess) * specularColor * specularFactor; 
+    }  
+
+    vec4 light = ambientLight + diffuseLight + specularLight + texture(map, uv_coords_varying); 
+    gl_FragColor = light;// texture(map, uv_coords_varying);
+}
