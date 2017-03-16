@@ -56,7 +56,7 @@ void Matrix::Rotate3X(float* matrix, const float degs) {
 	matrix[0] = t[0];
 	matrix[1] = t[1];
 	matrix[2] = t[2];
-	matrix[3] = t[3];
+	//matrix[3] = t[3];
 }
 
 void Matrix::Rotate3Y(float* matrix, const float degs) {
@@ -72,7 +72,7 @@ void Matrix::Rotate3Y(float* matrix, const float degs) {
 	matrix[0] = t[0];
 	matrix[1] = t[1];
 	matrix[2] = t[2];
-	matrix[3] = t[3];
+	//matrix[3] = t[3];
 }
 
 void Matrix::RotateY(float* matrix, const float degs) {

@@ -115,7 +115,7 @@ void Object3D::Draw(RenderingContext rcontext) {
     InitVBOs();
     
   rcontext.PushModelMatrix();
-    rcontext.Translate(translation[0], translation[1], translation[2]);
+    //rcontext.Translate(translation[0], translation[1], translation[2]);
     rcontext.UpdateMVPs();
     glUniformMatrix4fv(rcontext.mvhandle, 1, false, rcontext.mvmatrix);
     glUniformMatrix4fv(rcontext.mvphandle, 1, false, rcontext.mvpmatrix);

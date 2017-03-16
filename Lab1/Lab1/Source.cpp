@@ -23,10 +23,9 @@ void CreateObjects();
 void CleanUp();
 void RotateMagic();
 void OnAnimate();
-float calcDistance();
 void LoadMaps();
-void Picture();
 void Rotate3Y(float* matrix, const float degs);
+void MultiplyMatrix(float* i, float* x);
 
 #define ANIMATION_TIMER 101
 
@@ -41,11 +40,13 @@ Object3D* side3;
 Object3D* side4;
 Object3D* sky;
 Object3D* bottom;
+Object3D* test;
+
 DWORD startTime, lastTime;
 bool playing = false;
 int rotX, rotY, lastX, lastY, slowAscend, fastAscend, jerkCounter;
-float eye[4] = { 0, -1, 1.45, 0 };
-float center[3] = { 0, -1, 0 };
+float eye[3] = { 0, 0.2, 0.2 };
+float center[3] = { 0, 0.55, 0 };
 float up[3] = { 0, 1, 0 };
 float testing = 0.0f;
 std::string stage;
@@ -67,7 +68,7 @@ int glprogram;
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 	// This mini section is really useful to find memory leaks
 #ifdef _DEBUG   // only include this section of code in the DEBUG build
-	//  _CrtSetBreakAlloc(65);  // really useful line of code to help find memory leaks
+	  //_CrtSetBreakAlloc(157);  // really useful line of code to help find memory leaks
 	_onexit(_CrtDumpMemoryLeaks); // check for memory leaks when the program exits
 #endif
 
@@ -204,7 +205,6 @@ void OnCreate()
 
 	glUniform3f(rcontext.lighthandles[0], 1, 1, 1);
 	glUniform3f(rcontext.lighthandles[1], halfplane[0], halfplane[1], halfplane[2]);
-	//glUniform3f(rcontext.lighthandles[1], 1.0f, 1.0f, 1.0f);
 	glUniform4f(rcontext.lighthandles[2], 1.0f, 1.0f, 1.0f, 0.0f);
 	glUniform4f(rcontext.lighthandles[3], 1.0f, 1.0f, 1.0f, 0.0f);
 	glUniform4f(rcontext.lighthandles[4], 1.0f, 1.0f, 1.0f, 0.0f);
@@ -214,36 +214,7 @@ void OnCreate()
 	glUniform4f(rcontext.mathandles[2], 1.0f, 1.0f, 1.0f, 0.0f);
 	glUniform1f(rcontext.mathandles[3], 0.0f);
 
-	//Picture(L"sky.bmp", skyTexture, textureSky);
-	//Picture(L"ThemePark.bmp", side1Texture, textureSide1);
-	//Picture(L"Tropic.bmp", side2Texture);
-	//Picture(L"Pretty.bmp", side3Texture);
-	//Picture(L"JP.bmp", side4Texture);
-	//Picture(L"grass.bmp", bottomTexture);
-	//Picture(L"metalTexture.bmp", towerTexture);
-	//Picture(L"test", textureid1);
-	//Picture(L"test", textureid1);
-
 	LoadMaps();
-	//Picture();
-
-	model = Model3D::LoadModel(L"Poop.3dm");
-	modelObjects = (Object3D**)malloc(sizeof(Object3D) * model->GetNoOfObjects());
-	modelObjects = model->GetObjects();
-	platform = modelObjects[0];
-	tower = modelObjects[1];
-	sky = modelObjects[2];
-	bottom = modelObjects[2];
-	side1 = modelObjects[3];
-	side2 = modelObjects[4];
-	side3 = modelObjects[3];
-	side4 = modelObjects[4];
-
-	tower->SetTextureMap(towerid);
-	sky->SetTextureMap(skyid);
-	bottom->SetTextureMap(bottomid);
-
-
 
 	glUseProgram(glprogram);
 
@@ -265,7 +236,18 @@ void CreateObjects() {
 	// preload / precalculate here
 
 	// euler, get tickcount at start of draw and save. already have last tick count. *never* do two gettickcounts as will lose a small amount.
+	model = Model3D::LoadModel(L"Poop.3dm");
+	modelObjects = model->GetObjects();
+	platform = modelObjects[0];
+	tower = modelObjects[1];
+	sky = modelObjects[2];
+	bottom = modelObjects[2];
+	side1 = modelObjects[3];
+	side2 = modelObjects[4];
+	side3 = modelObjects[3];
+	side4 = modelObjects[4];
 
+	test = modelObjects[2];
 }
 
 // This is called when the window needs to be redrawn
@@ -274,18 +256,30 @@ void OnDraw() {
 	rcontext.InitModelMatrix(true);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	if (onBoardView) {
+		eye[0] = 0;
+		eye[1] = 0;
+		eye[2] = 0;
+		center[0] = 0;
+		center[1] = 0;
+		center[2] = 0;
+	}
+	else {
+		eye[0] = 0;
+		eye[1] = 0.2;
+		eye[2] = 1;
+	}
+
 	rcontext.Scale(3.0f, 3.0f, 3.0f);
 	DWORD now = ::GetTickCount();
 	DWORD elapsed = now - lastTime;
-	float distance = calcDistance();
-	//rcontext.Translate(testing, testing, testing);
-
+	
 
 	rcontext.PushModelMatrix();
-		glUniform1i(towerid, 0);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, towerid);
-		tower->Draw(rcontext);
+	glUniform1i(towerid, 0);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, towerid);
+	tower->Draw(rcontext);
 	rcontext.PopModelMatrix();
 
 	// SKY
@@ -293,57 +287,59 @@ void OnDraw() {
 		glUniform1i(skyid, 0);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, skyid);
-		rcontext.Translate(0, 0.85, 0);
+		rcontext.Translate(0, 0.9, 0);
 		sky->Draw(rcontext);
 	rcontext.PopModelMatrix();
 
 	// FLOOR
 	rcontext.PushModelMatrix();
-		glUniform1i(bottomid, 0);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, bottomid);
-		//rcontext.Translate(0, 0.85, 0);
-		bottom->Draw(rcontext);
+	glUniform1i(bottomid, 0);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, bottomid);
+	//rcontext.Translate(0, 0.85, 0);
+	bottom->Draw(rcontext);
 	rcontext.PopModelMatrix();
 
 	// SIDE 1
 	rcontext.PushModelMatrix();
-		glUniform1i(side1id, 0);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, side1id);
-		rcontext.Translate(0, 0, 0.05);
-		rcontext.RotateX(180);
-		side1->Draw(rcontext);
+	glUniform1i(side1id, 0);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, side1id);
+	rcontext.Translate(0, 0.45, 0.48);
+	rcontext.RotateX(180);
+	side1->Draw(rcontext);
 	rcontext.PopModelMatrix();
 
 	// SIDE 2
 	rcontext.PushModelMatrix();
-		glUniform1i(side2id, 0);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, side2id);
-		//rcontext.Translate(0, 0, 0);
-		rcontext.RotateX(180);
-		side2->Draw(rcontext);
+	glUniform1i(side2id, 0);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, side2id);
+	rcontext.Translate(0.48, 0.45, 0);
+	rcontext.RotateX(180);
+	rcontext.RotateY(180);
+	side2->Draw(rcontext);
 	rcontext.PopModelMatrix();
 
 	// SIDE 3
 	rcontext.PushModelMatrix();
-		glUniform1i(side3id, 0);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, side3id);
-		rcontext.Translate(0, 0, 1);
-		rcontext.RotateX(180);
-		side3->Draw(rcontext);
+	glUniform1i(side3id, 0);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, side3id);
+	rcontext.Translate(0, 0.45, -0.48);
+	rcontext.RotateX(180);
+	side3->Draw(rcontext);
 	rcontext.PopModelMatrix();
 
 	// SIDE 4
 	rcontext.PushModelMatrix();
-		glUniform1i(side4id, 0);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, side4id);
-		rcontext.Translate(1, 0, 0);
-		rcontext.RotateX(180);
-		side4->Draw(rcontext);
+	glUniform1i(side4id, 0);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, side4id);
+	rcontext.Translate(-0.48, 0.45, 0);
+	rcontext.RotateY(180);
+	rcontext.RotateX(180);
+	side4->Draw(rcontext);
 	rcontext.PopModelMatrix();
 
 
@@ -353,10 +349,6 @@ void OnDraw() {
 	//center[0] = 0; //10; this could be for turning it around
 	//center[1] = platformHeight;
 
-
-	glUniform1i(platformid, 0);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, platformid);
 	if (stage == "slowascend") {
 		rcontext.PushModelMatrix();
 		rcontext.RotateY(platformRotation);
@@ -530,34 +522,32 @@ void OnDraw() {
 	}
 
 	if (onBoardView) {
-		//eye[2] = 0.02;
-		//Rotate3Y(eye, platformRotation);
-
-		eye[1] = -1 + (platformHeight*2.3);
-
-		//Rotate3Y(center, platformRotation);
-
-		//center[0] = 0; //10; this could be for turning it around
-		//center[1] = platformHeight;
-		//center[2] = 5;
-	}
-	else {
-		eye[0] = 0;
-		eye[1] = -1;
-		eye[2] = 1.45;
-		center[0] = 0;
-		center[1] = -1;
-		center[2] = 0;
-		up[0] = 0;
-		up[1] = 1;
-		up[2] = 0;
+		float i[16];
+		Matrix::SetIdentity(i);
+		Matrix::RotateY(i, platformRotation);
+		Matrix::Translate(i, 0.01, (platformHeight*3.1), 0.28);
+		MultiplyMatrix(i, eye);
+		Matrix::Translate(i, 0, 0, 1);
+		MultiplyMatrix(i, center);
 	}
 
 	Matrix::SetLookAt(rcontext.viewmatrix, eye, center, up);
-
+	
 	glFinish();
 	SwapBuffers(wglGetCurrentDC());
 	lastTime = now;
+}
+
+void MultiplyMatrix(float* i, float* x) {
+	float temp[4];
+	temp[0] = (x[0] * i[0]) + (x[1] * i[4]) + (x[2] * i[8]) + i[12];
+	temp[1] = (x[0] * i[1]) + (x[1] * i[5]) + (x[2] * i[9]) + i[13];
+	temp[2] = (x[0] * i[2]) + (x[1] * i[6]) + (x[2] * i[10]) + i[14];
+
+	x[0] = temp[0];
+	x[1] = temp[1];
+	x[2] = temp[2];
+
 }
 
 void Rotate3Y(float* matrix, const float degs) {
@@ -598,13 +588,9 @@ void OnSize(DWORD type, UINT cx, UINT cy) {
 }
 
 void CleanUp() {
+	
+	delete model;
 	glDeleteProgram(glprogram);
-}
-
-float calcDistance() {
-	DWORD timeElapsed = ::GetTickCount() - startTime;
-	float distance = timeElapsed / 1000;
-	return distance;
 }
 
 void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags) {
@@ -624,18 +610,18 @@ void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags) {
 		// Back Space
 	case 8:
 		onBoardView = !onBoardView;
-		/*if (onBoardView) {
+		if (onBoardView) {
 			eye[2] = 0.5;
 			center[0] = 0;
 			center[1] = 0;
 			center[2] = 1;
 		}
 		else {
-			eye[2] = 5;
+			//eye[2] = 5;
 			center[0] = 0;
 			center[1] = 0;
 			center[2] = 0;
-		}*/
+		}
 		break;
 
 		// Esc
@@ -658,14 +644,14 @@ void OnAnimate() {
 	if (playing) {
 		startTime = ::GetTickCount();
 		KillTimer(hwnd, ANIMATION_TIMER);
-		SetWindowText(hwnd, L"Lines and Curves - Stopped");
+		SetWindowText(hwnd, L"Magical fairground ride - Stopped!");
 		playing = false;
 	}
 	else {
 		startTime = ::GetTickCount();
 		stage = "slowascend";
 		SetTimer(hwnd, ANIMATION_TIMER, 30, NULL);
-		SetWindowText(hwnd, L"PLAYING");
+		SetWindowText(hwnd, L"Magical fairground ride - Playing!");
 		playing = true;
 	}
 }
@@ -686,13 +672,12 @@ void OnMouseMove(UINT nFlags, int x, int y) {
 		int dx = lastX - x;
 		int dy = lastY - y;
 
-		rotX += dy;
-		rotY += dx;
+		rotX = dx;
+		rotY = dy;
 
 		RotateMagic();
 		lastX = x;
 		lastY = y;
-		OnDraw();
 	}
 }
 
@@ -701,40 +686,23 @@ void RotateMagic() {
 
 	Matrix::SetIdentity(identity);
 
-	float tempE[4] = { eye[0], eye[1], eye[2], eye[3] };
-	float tempU[4] = { up[0], up[1], up[2], up[3] };
+	Matrix::RotateY(identity, rotY);
+ 	Matrix::RotateX(identity, rotX);
 
-	Matrix::Rotate3Y(tempE, rotY / 100);
-	Matrix::Rotate3X(tempE, rotX / 100);
-
-	Matrix::Rotate3Y(tempU, rotY / 100);
-	Matrix::Rotate3X(tempU, rotX / 100);
-
-	eye[0] = identity[0] * tempE[0] + identity[4] * tempE[0] + identity[8] * tempE[0] + identity[12] * tempE[0];
-	eye[1] = identity[1] * tempE[1] + identity[5] * tempE[1] + identity[9] * tempE[1] + identity[13] * tempE[1];
-	eye[2] = identity[2] * tempE[2] + identity[6] * tempE[2] + identity[10] * tempE[2] + identity[14] * tempE[2];
-
-	up[0] = identity[0] * tempU[0] + identity[4] * tempU[0] + identity[8] * tempU[0] + identity[12] * tempU[0];
-	up[1] = identity[1] * tempU[1] + identity[5] * tempU[1] + identity[9] * tempU[1] + identity[13] * tempU[1];
-	up[2] = identity[2] * tempU[2] + identity[6] * tempU[2] + identity[10] * tempU[2] + identity[14] * tempU[2];
-	//Matrix::RotateY(identity, rotY);
-	//Matrix::RotateX(identity, rotX);
-
-
-	OnDraw();
-
+	MultiplyMatrix(identity, eye);
+	MultiplyMatrix(identity, up);
 }
 
 
 void LoadMaps() {
 	BITMAP imageinfo;
 	BYTE* imgdata;
-	DWORD* temp, *pixeldata;
+	DWORD*pixeldata;
 	HBITMAP image = (HBITMAP) ::LoadImage(NULL, L"metalTexture.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_CREATEDIBSECTION);
 	::GetObject(image, sizeof(BITMAP), &imageinfo);
 	imgdata = (BYTE*)imageinfo.bmBits;
 
-	temp = pixeldata = (DWORD*)malloc(imageinfo.bmWidth*imageinfo.bmHeight * 4);
+	pixeldata = (DWORD*)malloc(imageinfo.bmWidth*imageinfo.bmHeight * 4);
 	int i = 0;
 	for (int x = 0; x < (imageinfo.bmWidth*imageinfo.bmHeight) * 3; x += 3) {
 		pixeldata[i] = (DWORD)((255 << 24) | (imgdata[x] << 16) | (imgdata[x + 1] << 8) | (imgdata[x + 2]));
@@ -747,16 +715,18 @@ void LoadMaps() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageinfo.bmWidth, imageinfo.bmHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageinfo.bmWidth, imageinfo.bmHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixeldata);
 
 	glUniform1i(towerid, 0);
+	free(pixeldata);
+
 
 	// --------------------------------------------------------------------------------------------------------------------------------------------------
 	image = (HBITMAP) ::LoadImage(NULL, L"sky.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_CREATEDIBSECTION);
 	::GetObject(image, sizeof(BITMAP), &imageinfo);
 	imgdata = (BYTE*)imageinfo.bmBits;
 
-	temp = pixeldata = (DWORD*)malloc(imageinfo.bmWidth*imageinfo.bmHeight * 4);
+	pixeldata = (DWORD*)malloc(imageinfo.bmWidth*imageinfo.bmHeight * 4);
 	i = 0;
 	for (int x = 0; x < (imageinfo.bmWidth*imageinfo.bmHeight) * 3; x += 3) {
 		pixeldata[i] = (DWORD)((255 << 24) | (imgdata[x] << 16) | (imgdata[x + 1] << 8) | (imgdata[x + 2]));
@@ -769,16 +739,17 @@ void LoadMaps() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageinfo.bmWidth, imageinfo.bmHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageinfo.bmWidth, imageinfo.bmHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixeldata);
 
 	glUniform1i(skyid, 1);
+	free(pixeldata);
 
 	// --------------------------------------------------------------------------------------------------------------------------------------------------
 	image = (HBITMAP) ::LoadImage(NULL, L"grass.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_CREATEDIBSECTION);
 	::GetObject(image, sizeof(BITMAP), &imageinfo);
 	imgdata = (BYTE*)imageinfo.bmBits;
 
-	temp = pixeldata = (DWORD*)malloc(imageinfo.bmWidth*imageinfo.bmHeight * 4);
+	pixeldata = (DWORD*)malloc(imageinfo.bmWidth*imageinfo.bmHeight * 4);
 	i = 0;
 	for (int x = 0; x < (imageinfo.bmWidth*imageinfo.bmHeight) * 3; x += 3) {
 		pixeldata[i] = (DWORD)((255 << 24) | (imgdata[x] << 16) | (imgdata[x + 1] << 8) | (imgdata[x + 2]));
@@ -791,16 +762,17 @@ void LoadMaps() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageinfo.bmWidth, imageinfo.bmHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageinfo.bmWidth, imageinfo.bmHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixeldata);
 
 	glUniform1i(bottomid, 2);
+	free(pixeldata);
 
 	// --------------------------------------------------------------------------------------------------------------------------------------------------
-	image = (HBITMAP) ::LoadImage(NULL, L"JP.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_CREATEDIBSECTION);
+	image = (HBITMAP) ::LoadImage(NULL, L"forest.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_CREATEDIBSECTION);
 	::GetObject(image, sizeof(BITMAP), &imageinfo);
 	imgdata = (BYTE*)imageinfo.bmBits;
 
-	temp = pixeldata = (DWORD*)malloc(imageinfo.bmWidth*imageinfo.bmHeight * 4);
+	pixeldata = (DWORD*)malloc(imageinfo.bmWidth*imageinfo.bmHeight * 4);
 	i = 0;
 	for (int x = 0; x < (imageinfo.bmWidth*imageinfo.bmHeight) * 3; x += 3) {
 		pixeldata[i] = (DWORD)((255 << 24) | (imgdata[x] << 16) | (imgdata[x + 1] << 8) | (imgdata[x + 2]));
@@ -813,16 +785,17 @@ void LoadMaps() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageinfo.bmWidth, imageinfo.bmHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageinfo.bmWidth, imageinfo.bmHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixeldata);
 
 	glUniform1i(side1id, 3);
+	free(pixeldata);
 
 	// --------------------------------------------------------------------------------------------------------------------------------------------------
-	image = (HBITMAP) ::LoadImage(NULL, L"Pretty.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_CREATEDIBSECTION);
+	image = (HBITMAP) ::LoadImage(NULL, L"forest.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_CREATEDIBSECTION);
 	::GetObject(image, sizeof(BITMAP), &imageinfo);
 	imgdata = (BYTE*)imageinfo.bmBits;
 
-	temp = pixeldata = (DWORD*)malloc(imageinfo.bmWidth*imageinfo.bmHeight * 4);
+	pixeldata = (DWORD*)malloc(imageinfo.bmWidth*imageinfo.bmHeight * 4);
 	i = 0;
 	for (int x = 0; x < (imageinfo.bmWidth*imageinfo.bmHeight) * 3; x += 3) {
 		pixeldata[i] = (DWORD)((255 << 24) | (imgdata[x] << 16) | (imgdata[x + 1] << 8) | (imgdata[x + 2]));
@@ -835,16 +808,17 @@ void LoadMaps() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageinfo.bmWidth, imageinfo.bmHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageinfo.bmWidth, imageinfo.bmHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixeldata);
 
 	glUniform1i(side2id, 4);
+	free(pixeldata);
 
 	// --------------------------------------------------------------------------------------------------------------------------------------------------
-	image = (HBITMAP) ::LoadImage(NULL, L"ThemePark.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_CREATEDIBSECTION);
+	image = (HBITMAP) ::LoadImage(NULL, L"forest.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_CREATEDIBSECTION);
 	::GetObject(image, sizeof(BITMAP), &imageinfo);
 	imgdata = (BYTE*)imageinfo.bmBits;
 
-	temp = pixeldata = (DWORD*)malloc(imageinfo.bmWidth*imageinfo.bmHeight * 4);
+	pixeldata = (DWORD*)malloc(imageinfo.bmWidth*imageinfo.bmHeight * 4);
 	i = 0;
 	for (int x = 0; x < (imageinfo.bmWidth*imageinfo.bmHeight) * 3; x += 3) {
 		pixeldata[i] = (DWORD)((255 << 24) | (imgdata[x] << 16) | (imgdata[x + 1] << 8) | (imgdata[x + 2]));
@@ -857,16 +831,17 @@ void LoadMaps() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageinfo.bmWidth, imageinfo.bmHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageinfo.bmWidth, imageinfo.bmHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixeldata);
 
 	glUniform1i(side3id, 5);
+	free(pixeldata);
 
 	// --------------------------------------------------------------------------------------------------------------------------------------------------
-	image = (HBITMAP) ::LoadImage(NULL, L"Tropic.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_CREATEDIBSECTION);
+	image = (HBITMAP) ::LoadImage(NULL, L"forest.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_CREATEDIBSECTION);
 	::GetObject(image, sizeof(BITMAP), &imageinfo);
 	imgdata = (BYTE*)imageinfo.bmBits;
 
-	temp = pixeldata = (DWORD*)malloc(imageinfo.bmWidth*imageinfo.bmHeight * 4);
+	pixeldata = (DWORD*)malloc(imageinfo.bmWidth*imageinfo.bmHeight * 4);
 	i = 0;
 	for (int x = 0; x < (imageinfo.bmWidth*imageinfo.bmHeight) * 3; x += 3) {
 		pixeldata[i] = (DWORD)((255 << 24) | (imgdata[x] << 16) | (imgdata[x + 1] << 8) | (imgdata[x + 2]));
@@ -879,62 +854,9 @@ void LoadMaps() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageinfo.bmWidth, imageinfo.bmHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageinfo.bmWidth, imageinfo.bmHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixeldata);
 
 	glUniform1i(side4id, 6);
+	free(pixeldata);
 
-	// --------------------------------------------------------------------------------------------------------------------------------------------------
-	image = (HBITMAP) ::LoadImage(NULL, L"lavatexture.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_CREATEDIBSECTION);
-	::GetObject(image, sizeof(BITMAP), &imageinfo);
-	imgdata = (BYTE*)imageinfo.bmBits;
-
-	temp = pixeldata = (DWORD*)malloc(imageinfo.bmWidth*imageinfo.bmHeight * 4);
-	i = 0;
-	for (int x = 0; x < (imageinfo.bmWidth*imageinfo.bmHeight) * 3; x += 3) {
-		pixeldata[i] = (DWORD)((255 << 24) | (imgdata[x] << 16) | (imgdata[x + 1] << 8) | (imgdata[x + 2]));
-		i++;
-	}
-
-	glGenTextures(1, &platformid);
-	glBindTexture(GL_TEXTURE_2D, platformid);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageinfo.bmWidth, imageinfo.bmHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp);
-
-	glUniform1i(platformid, 7);
-
-
-
-	//free(temp);
-	//free(pixeldata);
-}
-
-void Picture() {
-	BITMAP imageinfo;
-	BYTE* imgdata;
-	DWORD* temp, *pixeldata;
-	HBITMAP image = (HBITMAP) ::LoadImage(NULL, L"Tropic.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_CREATEDIBSECTION);
-	::GetObject(image, sizeof(BITMAP), &imageinfo);
-	imgdata = (BYTE*)imageinfo.bmBits;
-
-	temp = pixeldata = (DWORD*)malloc(imageinfo.bmWidth*imageinfo.bmHeight * 4);
-	int i = 0;
-	for (int x = 0; x < (imageinfo.bmWidth*imageinfo.bmHeight) * 3; x += 3) {
-		pixeldata[i] = (DWORD)((255 << 24) | (imgdata[x] << 16) | (imgdata[x + 1] << 8) | (imgdata[x + 2]));
-		i++;
-	}
-
-	glGenTextures(1, &textureid);
-	glBindTexture(GL_TEXTURE_2D, textureid);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageinfo.bmWidth, imageinfo.bmHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp);
-
-	glUniform1i(textureid, 0);
-	//free(temp);
-	//free(pixeldata);
 }
