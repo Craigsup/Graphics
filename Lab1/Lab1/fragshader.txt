@@ -36,5 +36,5 @@ void main() {
     }  
 
     vec4 light = ambientLight + diffuseLight + specularLight + texture(map, uv_coords_varying); 
-    gl_FragColor = light;// texture(map, uv_coords_varying);
+    gl_FragColor = light;
 }

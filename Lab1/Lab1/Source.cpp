@@ -26,6 +26,7 @@ void OnAnimate();
 float calcDistance();
 void LoadMaps();
 void Picture();
+void Rotate3Y(float* matrix, const float degs);
 
 #define ANIMATION_TIMER 101
 
@@ -43,7 +44,7 @@ Object3D* bottom;
 DWORD startTime, lastTime;
 bool playing = false;
 int rotX, rotY, lastX, lastY, slowAscend, fastAscend, jerkCounter;
-float eye[4] = { 0, 0, 2.5, 0 };
+float eye[4] = { 0, -1, 1.45, 0 };
 float center[3] = { 0, -1, 0 };
 float up[3] = { 0, 1, 0 };
 float testing = 0.0f;
@@ -278,72 +279,71 @@ void OnDraw() {
 	DWORD elapsed = now - lastTime;
 	float distance = calcDistance();
 	//rcontext.Translate(testing, testing, testing);
-	Matrix::SetLookAt(rcontext.viewmatrix, eye, center, up);
 
 
 	rcontext.PushModelMatrix();
-	glUniform1i(towerid, 0);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, towerid);
-	tower->Draw(rcontext);
+		glUniform1i(towerid, 0);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, towerid);
+		tower->Draw(rcontext);
 	rcontext.PopModelMatrix();
 
 	// SKY
 	rcontext.PushModelMatrix();
-	glUniform1i(skyid, 0);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, skyid);
-	rcontext.Translate(0, 0.85, 0);
-	sky->Draw(rcontext);
+		glUniform1i(skyid, 0);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, skyid);
+		rcontext.Translate(0, 0.85, 0);
+		sky->Draw(rcontext);
 	rcontext.PopModelMatrix();
 
 	// FLOOR
 	rcontext.PushModelMatrix();
-	glUniform1i(bottomid, 0);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, bottomid);
-	//rcontext.Translate(0, 0.85, 0);
-	bottom->Draw(rcontext);
+		glUniform1i(bottomid, 0);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, bottomid);
+		//rcontext.Translate(0, 0.85, 0);
+		bottom->Draw(rcontext);
 	rcontext.PopModelMatrix();
 
 	// SIDE 1
 	rcontext.PushModelMatrix();
-	glUniform1i(side1id, 0);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, side1id);
-	rcontext.Translate(0, 0, 0.05);
-	rcontext.RotateX(180);
-	side1->Draw(rcontext);
+		glUniform1i(side1id, 0);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, side1id);
+		rcontext.Translate(0, 0, 0.05);
+		rcontext.RotateX(180);
+		side1->Draw(rcontext);
 	rcontext.PopModelMatrix();
 
 	// SIDE 2
 	rcontext.PushModelMatrix();
-	glUniform1i(side2id, 0);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, side2id);
-	//rcontext.Translate(0, 0, 0);
-	rcontext.RotateX(180);
-	side2->Draw(rcontext);
+		glUniform1i(side2id, 0);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, side2id);
+		//rcontext.Translate(0, 0, 0);
+		rcontext.RotateX(180);
+		side2->Draw(rcontext);
 	rcontext.PopModelMatrix();
 
 	// SIDE 3
 	rcontext.PushModelMatrix();
-	glUniform1i(side3id, 0);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, side3id);
-	rcontext.Translate(0, 0, 1);
-	rcontext.RotateX(180);
-	side3->Draw(rcontext);
+		glUniform1i(side3id, 0);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, side3id);
+		rcontext.Translate(0, 0, 1);
+		rcontext.RotateX(180);
+		side3->Draw(rcontext);
 	rcontext.PopModelMatrix();
 
 	// SIDE 4
 	rcontext.PushModelMatrix();
-	glUniform1i(side4id, 0);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, side4id);
-	rcontext.Translate(1, 0, 0);
-	rcontext.RotateX(180);
-	side4->Draw(rcontext);
+		glUniform1i(side4id, 0);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, side4id);
+		rcontext.Translate(1, 0, 0);
+		rcontext.RotateX(180);
+		side4->Draw(rcontext);
 	rcontext.PopModelMatrix();
 
 
@@ -353,6 +353,10 @@ void OnDraw() {
 	//center[0] = 0; //10; this could be for turning it around
 	//center[1] = platformHeight;
 
+
+	glUniform1i(platformid, 0);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, platformid);
 	if (stage == "slowascend") {
 		rcontext.PushModelMatrix();
 		rcontext.RotateY(platformRotation);
@@ -525,10 +529,51 @@ void OnDraw() {
 		}
 	}
 
+	if (onBoardView) {
+		//eye[2] = 0.02;
+		//Rotate3Y(eye, platformRotation);
+
+		eye[1] = -1 + (platformHeight*2.3);
+
+		//Rotate3Y(center, platformRotation);
+
+		//center[0] = 0; //10; this could be for turning it around
+		//center[1] = platformHeight;
+		//center[2] = 5;
+	}
+	else {
+		eye[0] = 0;
+		eye[1] = -1;
+		eye[2] = 1.45;
+		center[0] = 0;
+		center[1] = -1;
+		center[2] = 0;
+		up[0] = 0;
+		up[1] = 1;
+		up[2] = 0;
+	}
+
+	Matrix::SetLookAt(rcontext.viewmatrix, eye, center, up);
 
 	glFinish();
 	SwapBuffers(wglGetCurrentDC());
 	lastTime = now;
+}
+
+void Rotate3Y(float* matrix, const float degs) {
+	float rads = DEGSTORADS(degs);
+	float sin = sinf(rads);
+	float cos = cosf(rads);
+	float t[4];
+	t[0] = cos*matrix[0] + sin * matrix[2];
+	t[1] = matrix[1];
+	t[2] = -sin * matrix[0] + cos * matrix[2];
+	t[3] = 0;
+
+	matrix[0] = t[0];
+	matrix[1] = t[1];
+	matrix[2] = t[2];
+	matrix[3] = t[3];
 }
 
 
@@ -579,7 +624,7 @@ void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags) {
 		// Back Space
 	case 8:
 		onBoardView = !onBoardView;
-		if (onBoardView) {
+		/*if (onBoardView) {
 			eye[2] = 0.5;
 			center[0] = 0;
 			center[1] = 0;
@@ -590,7 +635,7 @@ void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags) {
 			center[0] = 0;
 			center[1] = 0;
 			center[2] = 0;
-		}
+		}*/
 		break;
 
 		// Esc
@@ -838,27 +883,27 @@ void LoadMaps() {
 
 	glUniform1i(side4id, 6);
 
-	//// --------------------------------------------------------------------------------------------------------------------------------------------------
-	//image = (HBITMAP) ::LoadImage(NULL, L"sun.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_CREATEDIBSECTION);
-	//::GetObject(image, sizeof(BITMAP), &imageinfo);
-	//imgdata = (BYTE*)imageinfo.bmBits;
+	// --------------------------------------------------------------------------------------------------------------------------------------------------
+	image = (HBITMAP) ::LoadImage(NULL, L"lavatexture.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_CREATEDIBSECTION);
+	::GetObject(image, sizeof(BITMAP), &imageinfo);
+	imgdata = (BYTE*)imageinfo.bmBits;
 
-	//temp = pixeldata = (DWORD*)malloc(imageinfo.bmWidth*imageinfo.bmHeight * 4);
-	//i = 0;
-	//for (int x = 0; x < (imageinfo.bmWidth*imageinfo.bmHeight) * 3; x += 3) {
-	//	pixeldata[i] = (DWORD)((255 << 24) | (imgdata[x] << 16) | (imgdata[x + 1] << 8) | (imgdata[x + 2]));
-	//	i++;
-	//}
+	temp = pixeldata = (DWORD*)malloc(imageinfo.bmWidth*imageinfo.bmHeight * 4);
+	i = 0;
+	for (int x = 0; x < (imageinfo.bmWidth*imageinfo.bmHeight) * 3; x += 3) {
+		pixeldata[i] = (DWORD)((255 << 24) | (imgdata[x] << 16) | (imgdata[x + 1] << 8) | (imgdata[x + 2]));
+		i++;
+	}
 
-	//glGenTextures(1, &platformid);
-	//glBindTexture(GL_TEXTURE_2D, platformid);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageinfo.bmWidth, imageinfo.bmHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp);
+	glGenTextures(1, &platformid);
+	glBindTexture(GL_TEXTURE_2D, platformid);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageinfo.bmWidth, imageinfo.bmHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp);
 
-	//glUniform1i(platformid, 7);
+	glUniform1i(platformid, 7);
 
 
 
