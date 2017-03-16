@@ -226,7 +226,7 @@ void OnCreate()
 	LoadMaps();
 	//Picture();
 
-	model = Model3D::LoadModel(L"LetsSee.3dm");
+	model = Model3D::LoadModel(L"Poop.3dm");
 	modelObjects = (Object3D**)malloc(sizeof(Object3D) * model->GetNoOfObjects());
 	modelObjects = model->GetObjects();
 	platform = modelObjects[0];
@@ -346,14 +346,8 @@ void OnDraw() {
 	side4->Draw(rcontext);
 	rcontext.PopModelMatrix();
 
-	//// SIDE 2
-	//rcontext.PushModelMatrix();
-	//	glUniform1i(side2id, 0);
-	//	glActiveTexture(GL_TEXTURE0);
-	//	glBindTexture(GL_TEXTURE_2D, side2id);
-	//	rcontext.Translate(0, 0.85, 0);
-	//	side2->Draw(rcontext);
-	//rcontext.PopModelMatrix();
+
+
 
 	//eye[1] = platformHeight;
 	//center[0] = 0; //10; this could be for turning it around

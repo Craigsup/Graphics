@@ -100,6 +100,95 @@ void Matrix::RotateY(float* matrix, const float degs) {
 	matrix[11] = t[7];
 }
 
+
+/*void Matrix::RotateY(float* matrix, const float degs) {
+float rads = DEGSTORADS(degs);
+float sin = sinf(rads);
+float cos = cosf(rads);
+float t[16];
+if (degs > 0) {
+int test = 1;
+}
+t[0] = cos*matrix[0] + sin * matrix[2];
+t[1] = cos * matrix[4] + sin * matrix[6];
+t[2] = cos*matrix[8] + sin * matrix[10];
+t[3] = cos*matrix[12] + sin*matrix[14];
+
+t[4] = -sin*matrix[0] + cos * matrix[2];
+t[5] = -sin * matrix[4] + cos * matrix[6];
+t[6] = -sin*matrix[8] + cos * matrix[10];
+t[7] = -sin*matrix[12] + cos*matrix[14];
+
+/*t[0] = matrix[0] * cos + matrix[2] * -sin;
+t[1] = matrix[1];
+t[2] = matrix[0] * sin + matrix[2] * cos;
+t[3] = 0;
+t[4] = matrix[4] * cos + matrix[6] * -sin;
+t[5] = matrix[5];
+t[6] = matrix[4] * sin + matrix[6] * cos;
+t[7] = 0;
+t[8] = matrix[8] * cos + matrix[10] * -sin;
+t[9] = matrix[9];
+t[10] = matrix[8] * sin + matrix[10] * cos;
+t[11] = 0;
+t[12] = matrix[12] * cos + matrix[14] * -sin;
+t[13] = matrix[13];
+t[14] = matrix[12] * sin + matrix[14] * cos;
+t[15] = 0;
+
+/*t[0] = matrix[0] * cos + matrix[8] * sin;
+t[1] = matrix[1] * cos + matrix[9] * sin;
+t[2] = matrix[2] * cos + matrix[10] * sin;
+t[3] = matrix[3] * cos + matrix[11] * sin;
+t[4] = matrix[4];
+t[5] = matrix[5];
+t[6] = matrix[6];
+t[7] = matrix[7];
+t[8] = matrix[0] * -sin + matrix[8] * cos;
+t[9] = matrix[1] * -sin + matrix[9] * cos;
+t[10] = matrix[2] * -sin + matrix[10] * cos;
+t[11] = matrix[3] * -sin + matrix[11] * cos;
+t[12] = 0;
+t[13] = 0;
+t[14] = 0;
+t[15] = 0;
+
+
+matrix[0] = t[0];
+matrix[1] = t[1];
+matrix[2] = t[2];
+matrix[3] = t[3];
+matrix[4] = t[4];
+matrix[5] = t[5];
+matrix[6] = t[6];
+matrix[7] = t[7];
+matrix[8] = t[8];
+matrix[9] = t[9];
+matrix[10] = t[10];
+matrix[11] = t[11];
+matrix[12] = t[12];
+matrix[13] = t[13];
+matrix[14] = t[14];
+matrix[15] = t[15];
+
+/*matrix[0] = t[0];
+matrix[1] = t[4];
+matrix[2] = t[8];
+matrix[3] = t[12];
+matrix[4] = t[1];
+matrix[5] = t[5];
+matrix[6] = t[9];
+matrix[7] = t[13];
+matrix[8] = t[2];
+matrix[9] = t[6];
+matrix[10] = t[10];
+matrix[11] = t[14];
+matrix[12] = t[3];
+matrix[13] = t[7];
+matrix[14] = t[11];
+matrix[15] = t[15];
+}*/
+
 void Matrix::RotateZ(float* matrix, const float degs) {
 	float rads = DEGSTORADS(degs);
 	float sin = sinf(rads);
