@@ -26,21 +26,14 @@ void OnAnimate();
 void LoadMaps();
 void Rotate3Y(float* matrix, const float degs);
 void MultiplyMatrix(float* i, float* x);
+void DrawPlatform();
 
 #define ANIMATION_TIMER 101
 
 
 Model3D* model;
 Object3D** modelObjects;
-Object3D* tower;
-Object3D* platform;
-Object3D* side1;
-Object3D* side2;
-Object3D* side3;
-Object3D* side4;
-Object3D* sky;
-Object3D* bottom;
-Object3D* test;
+Object3D* tower, *platform, *side1, *side2, *side3, *side4, *sky, *bottom, *test, *chair;
 
 DWORD startTime, lastTime;
 bool playing = false;
@@ -48,13 +41,11 @@ int rotX, rotY, lastX, lastY, slowAscend, fastAscend, jerkCounter;
 float eye[3] = { 0, 0.2, 0.2 };
 float center[3] = { 0, 0.55, 0 };
 float up[3] = { 0, 1, 0 };
-float testing = 0.0f;
 std::string stage;
 float platformHeight, platformRotation, waitTime;
 bool onBoardView = false;
-GLuint textureid;
 
-GLuint towerid, platformid, side1id, side2id, side3id, side4id, skyid, bottomid;
+GLuint towerid, platformid, side1id, side2id, side3id, side4id, skyid, bottomid, chairid;
 int textureTower, texturePlatform, textureSide1, textureSide2, textureSide3, textureSide4, textureSky, textureBottom;
 
 
@@ -171,8 +162,6 @@ void OnCreate()
 	// can change between multiple shader programs
 	glprogram = LoadShaders(L"vertshader.txt", L"fragshader.txt");
 
-	textureid = glGetUniformLocation(glprogram, "map");
-
 	rcontext.lighthandles[0] = glGetUniformLocation(glprogram, "direction");
 	rcontext.lighthandles[1] = glGetUniformLocation(glprogram, "halfplane");
 	rcontext.lighthandles[2] = glGetUniformLocation(glprogram, "ambientColor");
@@ -236,7 +225,7 @@ void CreateObjects() {
 	// preload / precalculate here
 
 	// euler, get tickcount at start of draw and save. already have last tick count. *never* do two gettickcounts as will lose a small amount.
-	model = Model3D::LoadModel(L"Poop.3dm");
+	model = Model3D::LoadModel(L"FinalPls.3dm");
 	modelObjects = model->GetObjects();
 	platform = modelObjects[0];
 	tower = modelObjects[1];
@@ -246,6 +235,7 @@ void CreateObjects() {
 	side2 = modelObjects[4];
 	side3 = modelObjects[3];
 	side4 = modelObjects[4];
+	chair = modelObjects[5];
 
 	test = modelObjects[2];
 }
@@ -268,19 +258,24 @@ void OnDraw() {
 		eye[0] = 0;
 		eye[1] = 0.2;
 		eye[2] = 1;
+		center[0] = 0;
+		center[1] = 0.55;
+		center[2] = 0;
 	}
 
 	rcontext.Scale(3.0f, 3.0f, 3.0f);
+	rcontext.RotateY(0.4);
 	DWORD now = ::GetTickCount();
 	DWORD elapsed = now - lastTime;
-	
 
 	rcontext.PushModelMatrix();
-	glUniform1i(towerid, 0);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, towerid);
-	tower->Draw(rcontext);
+		glUniform1i(towerid, 0);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, towerid);
+		tower->Draw(rcontext);
 	rcontext.PopModelMatrix();
+
+
 
 	// SKY
 	rcontext.PushModelMatrix();
@@ -312,9 +307,9 @@ void OnDraw() {
 
 	// SIDE 2
 	rcontext.PushModelMatrix();
-	glUniform1i(side2id, 0);
+	glUniform1i(side1id, 0);
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, side2id);
+	glBindTexture(GL_TEXTURE_2D, side1id);
 	rcontext.Translate(0.48, 0.45, 0);
 	rcontext.RotateX(180);
 	rcontext.RotateY(180);
@@ -323,9 +318,9 @@ void OnDraw() {
 
 	// SIDE 3
 	rcontext.PushModelMatrix();
-	glUniform1i(side3id, 0);
+	glUniform1i(side1id, 0);
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, side3id);
+	glBindTexture(GL_TEXTURE_2D, side1id);
 	rcontext.Translate(0, 0.45, -0.48);
 	rcontext.RotateX(180);
 	side3->Draw(rcontext);
@@ -333,9 +328,9 @@ void OnDraw() {
 
 	// SIDE 4
 	rcontext.PushModelMatrix();
-	glUniform1i(side4id, 0);
+	glUniform1i(side1id, 0);
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, side4id);
+	glBindTexture(GL_TEXTURE_2D, side1id);
 	rcontext.Translate(-0.48, 0.45, 0);
 	rcontext.RotateY(180);
 	rcontext.RotateX(180);
@@ -353,7 +348,7 @@ void OnDraw() {
 		rcontext.PushModelMatrix();
 		rcontext.RotateY(platformRotation);
 		rcontext.Translate(0, platformHeight, 0);
-		platform->Draw(rcontext);
+		DrawPlatform();
 		rcontext.PopModelMatrix();
 		platformHeight += 0.001;
 		if (platformHeight >= 0.08) {
@@ -364,7 +359,7 @@ void OnDraw() {
 		rcontext.PushModelMatrix();
 		rcontext.RotateY(platformRotation);
 		rcontext.Translate(0, platformHeight, 0);
-		platform->Draw(rcontext);
+		DrawPlatform();
 		rcontext.PopModelMatrix();
 		platformHeight -= 0.002;
 		if (platformHeight >= 0.070) {
@@ -375,7 +370,7 @@ void OnDraw() {
 		rcontext.PushModelMatrix();
 		rcontext.RotateY(platformRotation);
 		rcontext.Translate(0, platformHeight, 0);
-		platform->Draw(rcontext);
+		DrawPlatform();
 		rcontext.PopModelMatrix();
 		platformHeight += 0.002;
 		if (platformHeight >= 0.085) {
@@ -394,7 +389,7 @@ void OnDraw() {
 		rcontext.Translate(0, platformHeight, 0);
 		platformRotation += (float)sin((3 * M_PI) / 180.0f * elapsed);
 		rcontext.RotateY(platformRotation);
-		platform->Draw(rcontext);
+		DrawPlatform();
 		rcontext.PopModelMatrix();
 		//platformHeight += 0.005;
 		if (platformRotation > 100) {
@@ -406,7 +401,7 @@ void OnDraw() {
 		rcontext.Translate(0, platformHeight, 0);
 		platformRotation -= (float)sin((3 * M_PI) / 180.0f * elapsed);
 		rcontext.RotateY(platformRotation);
-		platform->Draw(rcontext);
+		DrawPlatform();
 		rcontext.PopModelMatrix();
 		//platformHeight += 0.005;
 		if (platformRotation <= 0) {
@@ -418,7 +413,7 @@ void OnDraw() {
 		rcontext.Translate(0, platformHeight, 0);
 		platformRotation -= (float)sin((3 * M_PI) / 180.0f * elapsed);
 		rcontext.RotateY(platformRotation);
-		platform->Draw(rcontext);
+		DrawPlatform();
 		rcontext.PopModelMatrix();
 		platformHeight += 0.005;
 		if (platformHeight >= 0.320) {
@@ -429,7 +424,7 @@ void OnDraw() {
 		rcontext.PushModelMatrix();
 		rcontext.RotateY(platformRotation);
 		rcontext.Translate(0, platformHeight, 0);
-		platform->Draw(rcontext);
+		DrawPlatform();
 		rcontext.PopModelMatrix();
 		if (waitTime < 15) {
 			waitTime += 0.5;
@@ -444,7 +439,7 @@ void OnDraw() {
 		rcontext.PushModelMatrix();
 		rcontext.RotateY(platformRotation);
 		rcontext.Translate(0, platformHeight, 0);
-		platform->Draw(rcontext);
+		DrawPlatform();
 		rcontext.PopModelMatrix();
 		platformHeight -= 0.025;
 		if (platformHeight <= 0.05) {
@@ -455,7 +450,7 @@ void OnDraw() {
 		rcontext.PushModelMatrix();
 		rcontext.RotateY(platformRotation);
 		rcontext.Translate(0, platformHeight, 0);
-		platform->Draw(rcontext);
+		DrawPlatform();
 		rcontext.PopModelMatrix();
 		if (waitTime < 20) {
 			waitTime += 0.5;
@@ -471,7 +466,7 @@ void OnDraw() {
 		rcontext.Translate(0, platformHeight, 0);
 		platformRotation -= (float)sin((3 * M_PI) / 180.0f * elapsed);
 		rcontext.RotateY(platformRotation);
-		platform->Draw(rcontext);
+		DrawPlatform();
 		rcontext.PopModelMatrix();
 		platformHeight += 0.001;
 		if (platformHeight >= 0.320) {
@@ -482,7 +477,7 @@ void OnDraw() {
 		rcontext.PushModelMatrix();
 		rcontext.RotateY(platformRotation);
 		rcontext.Translate(0, platformHeight, 0);
-		platform->Draw(rcontext);
+		DrawPlatform();
 		rcontext.PopModelMatrix();
 		if (waitTime < 25) {
 			waitTime += 0.5;
@@ -498,7 +493,7 @@ void OnDraw() {
 		platformRotation -= (float)sin((3 * M_PI) / 180.0f * elapsed) * 3;
 		rcontext.RotateY(platformRotation);
 		rcontext.Translate(0, platformHeight, 0);
-		platform->Draw(rcontext);
+		DrawPlatform();
 		rcontext.PopModelMatrix();
 		platformHeight -= 0.025;
 		if (platformHeight <= 0.05) {
@@ -509,7 +504,7 @@ void OnDraw() {
 		rcontext.PushModelMatrix();
 		rcontext.RotateY(platformRotation);
 		rcontext.Translate(0, platformHeight, 0);
-		platform->Draw(rcontext);
+		DrawPlatform();
 		rcontext.PopModelMatrix();
 		if (waitTime < 25) {
 			waitTime += 0.5;
@@ -525,7 +520,7 @@ void OnDraw() {
 		float i[16];
 		Matrix::SetIdentity(i);
 		Matrix::RotateY(i, platformRotation);
-		Matrix::Translate(i, 0.01, (platformHeight*3.1), 0.28);
+		Matrix::Translate(i, 0.01, (platformHeight*3.8), 0.35);
 		MultiplyMatrix(i, eye);
 		Matrix::Translate(i, 0, 0, 1);
 		MultiplyMatrix(i, center);
@@ -536,6 +531,25 @@ void OnDraw() {
 	glFinish();
 	SwapBuffers(wglGetCurrentDC());
 	lastTime = now;
+}
+
+void DrawPlatform() {
+	glUniform1i(platformid, 0);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, platformid);
+	platform->Draw(rcontext);
+	int spacing = 360 / 6;
+		glUniform1i(chairid, 0);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, chairid);
+		rcontext.PushModelMatrix();
+		for (int i = 0; i < 360; i+=60) {
+			//rcontext.Translate(0.1, 0, 0);
+			rcontext.RotateY(i + platformRotation);
+			chair->Draw(rcontext);
+
+		}
+		rcontext.PopModelMatrix();
 }
 
 void MultiplyMatrix(float* i, float* x) {
@@ -600,11 +614,11 @@ void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags) {
 		OnAnimate();
 		break;
 	case 38:
-		eye[2] -= 0.5;
+		eye[1] += 0.5;
 		OnDraw();
 		break;
 	case 40:
-		eye[2] += 0.5;
+		eye[1] -= 0.5;
 		OnDraw();
 		break;
 		// Back Space
@@ -617,10 +631,12 @@ void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags) {
 			center[2] = 1;
 		}
 		else {
-			//eye[2] = 5;
 			center[0] = 0;
-			center[1] = 0;
+			center[1] = 0.55;
 			center[2] = 0;
+			eye[0] = 0;
+			eye[1] = 0.2;
+			eye[2] = 1;
 		}
 		break;
 
@@ -790,7 +806,7 @@ void LoadMaps() {
 	glUniform1i(side1id, 3);
 	free(pixeldata);
 
-	// --------------------------------------------------------------------------------------------------------------------------------------------------
+	/*// --------------------------------------------------------------------------------------------------------------------------------------------------
 	image = (HBITMAP) ::LoadImage(NULL, L"forest.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_CREATEDIBSECTION);
 	::GetObject(image, sizeof(BITMAP), &imageinfo);
 	imgdata = (BYTE*)imageinfo.bmBits;
@@ -812,9 +828,9 @@ void LoadMaps() {
 
 	glUniform1i(side2id, 4);
 	free(pixeldata);
-
+	*/
 	// --------------------------------------------------------------------------------------------------------------------------------------------------
-	image = (HBITMAP) ::LoadImage(NULL, L"forest.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_CREATEDIBSECTION);
+	image = (HBITMAP) ::LoadImage(NULL, L"platformtexture.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_CREATEDIBSECTION);
 	::GetObject(image, sizeof(BITMAP), &imageinfo);
 	imgdata = (BYTE*)imageinfo.bmBits;
 
@@ -825,19 +841,19 @@ void LoadMaps() {
 		i++;
 	}
 
-	glGenTextures(1, &side3id);
-	glBindTexture(GL_TEXTURE_2D, side3id);
+	glGenTextures(1, &platformid);
+	glBindTexture(GL_TEXTURE_2D, platformid);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageinfo.bmWidth, imageinfo.bmHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixeldata);
 
-	glUniform1i(side3id, 5);
+	glUniform1i(platformid, 5);
 	free(pixeldata);
-
+	
 	// --------------------------------------------------------------------------------------------------------------------------------------------------
-	image = (HBITMAP) ::LoadImage(NULL, L"forest.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_CREATEDIBSECTION);
+	image = (HBITMAP) ::LoadImage(NULL, L"leather.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_CREATEDIBSECTION);
 	::GetObject(image, sizeof(BITMAP), &imageinfo);
 	imgdata = (BYTE*)imageinfo.bmBits;
 
@@ -848,15 +864,15 @@ void LoadMaps() {
 		i++;
 	}
 
-	glGenTextures(1, &side4id);
-	glBindTexture(GL_TEXTURE_2D, side4id);
+	glGenTextures(1, &chairid);
+	glBindTexture(GL_TEXTURE_2D, chairid);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageinfo.bmWidth, imageinfo.bmHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixeldata);
 
-	glUniform1i(side4id, 6);
+	glUniform1i(chairid, 6);
 	free(pixeldata);
 
 }
