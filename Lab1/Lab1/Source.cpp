@@ -38,8 +38,8 @@ Object3D* tower, *platform, *side1, *side2, *side3, *side4, *sky, *bottom, *chai
 DWORD startTime, lastTime;
 bool playing = false;
 int rotX, rotY, lastX, lastY, slowAscend, fastAscend, jerkCounter;
-float eye[3] = { 0, 0.2, 0.2 };
-float center[3] = { 0, 0.55, 0 };
+float eye[3] = { 0, 0.17, 1 };
+float center[3] = { 0, 0.50, 0 };
 float up[3] = { 0, 1, 0 };
 std::string stage;
 float platformHeight, platformRotation, waitTime;
@@ -51,7 +51,7 @@ GLuint towerid, platformid, side1id, side2id, side3id, side4id, skyid, bottomid,
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 	// This mini section is really useful to find memory leaks
 #ifdef _DEBUG   // only include this section of code in the DEBUG build
-	  _CrtSetBreakAlloc(150);  // really useful line of code to help find memory leaks
+	  //_CrtSetBreakAlloc(249);  // really useful line of code to help find memory leaks
 	_onexit(_CrtDumpMemoryLeaks); // check for memory leaks when the program exits
 #endif
 
@@ -224,13 +224,6 @@ void CreateObjects() {
 	side3 = modelObjects[3];
 	side4 = modelObjects[4];
 	chair = modelObjects[5];
-
-	eye[0] = 0;
-	eye[1] = 0.2;
-	eye[2] = 1;
-	center[0] = 0;
-	center[1] = 0.55;
-	center[2] = 0;
 }
 
 // This is called when the window needs to be redrawn
@@ -248,16 +241,9 @@ void OnDraw() {
 		center[2] = 0;
 	}
 	else {
-		/*eye[0] = 0;
-		eye[1] = 0.2;
-		eye[2] = 1;
-		center[0] = 0;
-		center[1] = 0.55;
-		center[2] = 0;*/
 	}
 
 	rcontext.Scale(3.0f, 3.0f, 3.0f);
-	rcontext.RotateY(0.4);
 	DWORD now = ::GetTickCount();
 	DWORD elapsed = now - lastTime;
 
@@ -326,7 +312,13 @@ void OnDraw() {
 		rcontext.RotateX(180);
 		side4->Draw(rcontext);
 	rcontext.PopModelMatrix();
-
+	if (stage == "") {
+		rcontext.PushModelMatrix();
+		//rcontext.RotateY(platformRotation);
+		//rcontext.Translate(0, platformHeight, 0);
+		DrawPlatform();
+		rcontext.PopModelMatrix();
+	}
 	if (stage == "slowascend") {
 		rcontext.PushModelMatrix();
 		rcontext.RotateY(platformRotation);
@@ -462,7 +454,6 @@ void OnDraw() {
 			waitTime += 0.5;
 		}
 		else {
-			//platformHeight = 0.1;
 			waitTime = 0;
 			stage = "drop1";
 		}
@@ -516,13 +507,13 @@ void DrawPlatform() {
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, platformid);
 	platform->Draw(rcontext);
-	int spacing = 360 / 6;
+	int spacing = 360 / 8;
 		glUniform1i(chairid, 0);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, chairid);
 		rcontext.PushModelMatrix();
-		for (int i = 0; i < 360; i+=60) {
-			rcontext.RotateY(i + platformRotation);
+		for (int i = 0; i <= 360; i+=spacing) {
+			rcontext.RotateY(i + (2*platformRotation));
 			chair->Draw(rcontext);
 
 		}
@@ -591,10 +582,10 @@ void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags) {
 	//reset
 	case 82:
 		eye[0] = 0;
-		eye[1] = 0.2;
+		eye[1] = 0.17;
 		eye[2] = 1;
 		center[0] = 0;
-		center[1] = 0.55;
+		center[1] = 0.5;
 		center[2] = 0;
 		up[0] = 0;
 		up[1] = 1;
@@ -607,7 +598,7 @@ void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags) {
 		eye[1] = 1.5;
 		eye[2] = 0;
 		center[0] = 0;
-		center[1] = -0.55;
+		center[1] = -0.50;
 		center[2] = 0;
 		up[0] = 0;
 		up[1] = 1;
@@ -625,7 +616,7 @@ void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags) {
 		}
 		else {
 			center[0] = 0;
-			center[1] = 0.55;
+			center[1] = 0.50;
 			center[2] = 0;
 			eye[0] = 0;
 			eye[1] = 0.2;
@@ -698,10 +689,12 @@ void RotateMagic() {
 	Matrix::RotateY(identity, rotY);
  	Matrix::RotateX(identity, rotX);
 
-	//Matrix::Translate();
-	
 	MultiplyMatrix(identity, eye);
 	MultiplyMatrix(identity, up);
+
+	if (eye[1] < 0) {
+		eye[1] = 0;
+	}
 }
 
 
