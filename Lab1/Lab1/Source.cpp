@@ -7,7 +7,6 @@
 #include "Model3D.h"
 #include <string>
 
-
 static HWND hwnd;
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -24,16 +23,17 @@ void CleanUp();
 void RotateMagic();
 void OnAnimate();
 void LoadMaps();
-void Rotate3Y(float* matrix, const float degs);
 void MultiplyMatrix(float* i, float* x);
 void DrawPlatform();
 
 #define ANIMATION_TIMER 101
 
+RenderingContext rcontext;
+int glprogram;
 
 Model3D* model;
 Object3D** modelObjects;
-Object3D* tower, *platform, *side1, *side2, *side3, *side4, *sky, *bottom, *test, *chair;
+Object3D* tower, *platform, *side1, *side2, *side3, *side4, *sky, *bottom, *chair;
 
 DWORD startTime, lastTime;
 bool playing = false;
@@ -46,20 +46,12 @@ float platformHeight, platformRotation, waitTime;
 bool onBoardView = false;
 
 GLuint towerid, platformid, side1id, side2id, side3id, side4id, skyid, bottomid, chairid;
-int textureTower, texturePlatform, textureSide1, textureSide2, textureSide3, textureSide4, textureSky, textureBottom;
-
-
-RenderingContext rcontext;
-
-int glprogram;
-
-
 
 // Win32 entry point
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 	// This mini section is really useful to find memory leaks
 #ifdef _DEBUG   // only include this section of code in the DEBUG build
-	  //_CrtSetBreakAlloc(157);  // really useful line of code to help find memory leaks
+	  _CrtSetBreakAlloc(150);  // really useful line of code to help find memory leaks
 	_onexit(_CrtDumpMemoryLeaks); // check for memory leaks when the program exits
 #endif
 
@@ -178,11 +170,7 @@ void OnCreate()
 
 	rcontext.verthandles[0] = glGetAttribLocation(glprogram, "a_position");
 	rcontext.verthandles[1] = glGetAttribLocation(glprogram, "a_normal");
-	//rcontext.verthandles[2] = glGetAttribLocation(glprogram, "v_ecNormal");
 	rcontext.verthandles[2] = glGetAttribLocation(glprogram, "uv_coords");
-
-
-	int a_uvId = glGetAttribLocation(glprogram, "uv_coords");
 
 	float L[3] = { 1, 1, 1 };
 	float LPV[3] = { eye[0] + L[0], eye[1] + L[1], eye[2] + L[2] };
@@ -237,9 +225,6 @@ void CreateObjects() {
 	side4 = modelObjects[4];
 	chair = modelObjects[5];
 
-	test = modelObjects[2];
-
-
 	eye[0] = 0;
 	eye[1] = 0.2;
 	eye[2] = 1;
@@ -283,8 +268,6 @@ void OnDraw() {
 		tower->Draw(rcontext);
 	rcontext.PopModelMatrix();
 
-
-
 	// SKY
 	rcontext.PushModelMatrix();
 		glUniform1i(skyid, 0);
@@ -296,61 +279,53 @@ void OnDraw() {
 
 	// FLOOR
 	rcontext.PushModelMatrix();
-	glUniform1i(bottomid, 0);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, bottomid);
-	//rcontext.Translate(0, 0.85, 0);
-	bottom->Draw(rcontext);
+		glUniform1i(bottomid, 0);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, bottomid);
+		bottom->Draw(rcontext);
 	rcontext.PopModelMatrix();
 
 	// SIDE 1
 	rcontext.PushModelMatrix();
-	glUniform1i(side1id, 0);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, side1id);
-	rcontext.Translate(0, 0.45, 0.48);
-	rcontext.RotateX(180);
-	side1->Draw(rcontext);
+		glUniform1i(side1id, 0);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, side1id);
+		rcontext.Translate(0, 0.45, 0.48);
+		rcontext.RotateX(180);
+		side1->Draw(rcontext);
 	rcontext.PopModelMatrix();
 
 	// SIDE 2
 	rcontext.PushModelMatrix();
-	glUniform1i(side1id, 0);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, side1id);
-	rcontext.Translate(0.48, 0.45, 0);
-	rcontext.RotateX(180);
-	rcontext.RotateY(180);
-	side2->Draw(rcontext);
+		glUniform1i(side1id, 0);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, side1id);
+		rcontext.Translate(0.48, 0.45, 0);
+		rcontext.RotateX(180);
+		rcontext.RotateY(180);
+		side2->Draw(rcontext);
 	rcontext.PopModelMatrix();
 
 	// SIDE 3
 	rcontext.PushModelMatrix();
-	glUniform1i(side1id, 0);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, side1id);
-	rcontext.Translate(0, 0.45, -0.48);
-	rcontext.RotateX(180);
-	side3->Draw(rcontext);
+		glUniform1i(side1id, 0);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, side1id);
+		rcontext.Translate(0, 0.45, -0.48);
+		rcontext.RotateX(180);
+		side3->Draw(rcontext);
 	rcontext.PopModelMatrix();
 
 	// SIDE 4
 	rcontext.PushModelMatrix();
-	glUniform1i(side1id, 0);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, side1id);
-	rcontext.Translate(-0.48, 0.45, 0);
-	rcontext.RotateY(180);
-	rcontext.RotateX(180);
-	side4->Draw(rcontext);
+		glUniform1i(side1id, 0);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, side1id);
+		rcontext.Translate(-0.48, 0.45, 0);
+		rcontext.RotateY(180);
+		rcontext.RotateX(180);
+		side4->Draw(rcontext);
 	rcontext.PopModelMatrix();
-
-
-
-
-	//eye[1] = platformHeight;
-	//center[0] = 0; //10; this could be for turning it around
-	//center[1] = platformHeight;
 
 	if (stage == "slowascend") {
 		rcontext.PushModelMatrix();
@@ -365,9 +340,9 @@ void OnDraw() {
 	}
 	if (stage == "jerkDown") {
 		rcontext.PushModelMatrix();
-		rcontext.RotateY(platformRotation);
-		rcontext.Translate(0, platformHeight, 0);
-		DrawPlatform();
+			rcontext.RotateY(platformRotation);
+			rcontext.Translate(0, platformHeight, 0);
+			DrawPlatform();
 		rcontext.PopModelMatrix();
 		platformHeight -= 0.002;
 		if (platformHeight >= 0.070) {
@@ -376,9 +351,9 @@ void OnDraw() {
 	}
 	if (stage == "jerkUp") {
 		rcontext.PushModelMatrix();
-		rcontext.RotateY(platformRotation);
-		rcontext.Translate(0, platformHeight, 0);
-		DrawPlatform();
+			rcontext.RotateY(platformRotation);
+			rcontext.Translate(0, platformHeight, 0);
+			DrawPlatform();
 		rcontext.PopModelMatrix();
 		platformHeight += 0.002;
 		if (platformHeight >= 0.085) {
@@ -394,34 +369,32 @@ void OnDraw() {
 	}
 	if (stage == "slowRotateClockwise") {
 		rcontext.PushModelMatrix();
-		rcontext.Translate(0, platformHeight, 0);
-		platformRotation += (float)sin((3 * M_PI) / 180.0f * elapsed);
-		rcontext.RotateY(platformRotation);
-		DrawPlatform();
+			rcontext.Translate(0, platformHeight, 0);
+			platformRotation += (float)sin((3 * M_PI) / 180.0f * elapsed);
+			rcontext.RotateY(platformRotation);
+			DrawPlatform();
 		rcontext.PopModelMatrix();
-		//platformHeight += 0.005;
 		if (platformRotation > 100) {
 			stage = "slowRotateAntiClockwise";
 		}
 	}
 	if (stage == "slowRotateAntiClockwise") {
 		rcontext.PushModelMatrix();
-		rcontext.Translate(0, platformHeight, 0);
-		platformRotation -= (float)sin((3 * M_PI) / 180.0f * elapsed);
-		rcontext.RotateY(platformRotation);
-		DrawPlatform();
+			rcontext.Translate(0, platformHeight, 0);
+			platformRotation -= (float)sin((3 * M_PI) / 180.0f * elapsed);
+			rcontext.RotateY(platformRotation);
+			DrawPlatform();
 		rcontext.PopModelMatrix();
-		//platformHeight += 0.005;
 		if (platformRotation <= 0) {
 			stage = "quickascendRotate";
 		}
 	}
 	if (stage == "quickascendRotate") {
 		rcontext.PushModelMatrix();
-		rcontext.Translate(0, platformHeight, 0);
-		platformRotation -= (float)sin((3 * M_PI) / 180.0f * elapsed);
-		rcontext.RotateY(platformRotation);
-		DrawPlatform();
+			rcontext.Translate(0, platformHeight, 0);
+			platformRotation -= (float)sin((3 * M_PI) / 180.0f * elapsed);
+			rcontext.RotateY(platformRotation);
+			DrawPlatform();
 		rcontext.PopModelMatrix();
 		platformHeight += 0.005;
 		if (platformHeight >= 0.320) {
@@ -430,24 +403,23 @@ void OnDraw() {
 	}
 	if (stage == "wait") {
 		rcontext.PushModelMatrix();
-		rcontext.RotateY(platformRotation);
-		rcontext.Translate(0, platformHeight, 0);
-		DrawPlatform();
+			rcontext.RotateY(platformRotation);
+			rcontext.Translate(0, platformHeight, 0);
+			DrawPlatform();
 		rcontext.PopModelMatrix();
 		if (waitTime < 15) {
 			waitTime += 0.5;
 		}
 		else {
-			//platformHeight = 0.1;
 			waitTime = 0;
 			stage = "drop";
 		}
 	}
 	if (stage == "drop") {
 		rcontext.PushModelMatrix();
-		rcontext.RotateY(platformRotation);
-		rcontext.Translate(0, platformHeight, 0);
-		DrawPlatform();
+			rcontext.RotateY(platformRotation);
+			rcontext.Translate(0, platformHeight, 0);
+			DrawPlatform();
 		rcontext.PopModelMatrix();
 		platformHeight -= 0.025;
 		if (platformHeight <= 0.05) {
@@ -456,25 +428,24 @@ void OnDraw() {
 	}
 	if (stage == "stop1") {
 		rcontext.PushModelMatrix();
-		rcontext.RotateY(platformRotation);
-		rcontext.Translate(0, platformHeight, 0);
-		DrawPlatform();
+			rcontext.RotateY(platformRotation);
+			rcontext.Translate(0, platformHeight, 0);
+			DrawPlatform();
 		rcontext.PopModelMatrix();
 		if (waitTime < 20) {
 			waitTime += 0.5;
 		}
 		else {
-			//platformHeight = 0.1;
 			waitTime = 0;
 			stage = "slowascendRotate";
 		}
 	}
 	if (stage == "slowascendRotate") {
 		rcontext.PushModelMatrix();
-		rcontext.Translate(0, platformHeight, 0);
-		platformRotation -= (float)sin((3 * M_PI) / 180.0f * elapsed);
-		rcontext.RotateY(platformRotation);
-		DrawPlatform();
+			rcontext.Translate(0, platformHeight, 0);
+			platformRotation -= (float)sin((3 * M_PI) / 180.0f * elapsed);
+			rcontext.RotateY(platformRotation);
+			DrawPlatform();
 		rcontext.PopModelMatrix();
 		platformHeight += 0.001;
 		if (platformHeight >= 0.320) {
@@ -483,9 +454,9 @@ void OnDraw() {
 	}
 	if (stage == "wait1") {
 		rcontext.PushModelMatrix();
-		rcontext.RotateY(platformRotation);
-		rcontext.Translate(0, platformHeight, 0);
-		DrawPlatform();
+			rcontext.RotateY(platformRotation);
+			rcontext.Translate(0, platformHeight, 0);
+			DrawPlatform();
 		rcontext.PopModelMatrix();
 		if (waitTime < 25) {
 			waitTime += 0.5;
@@ -498,10 +469,10 @@ void OnDraw() {
 	}
 	if (stage == "drop1") {
 		rcontext.PushModelMatrix();
-		platformRotation -= (float)sin((3 * M_PI) / 180.0f * elapsed) * 3;
-		rcontext.RotateY(platformRotation);
-		rcontext.Translate(0, platformHeight, 0);
-		DrawPlatform();
+			platformRotation -= (float)sin((3 * M_PI) / 180.0f * elapsed) * 3;
+			rcontext.RotateY(platformRotation);
+			rcontext.Translate(0, platformHeight, 0);
+			DrawPlatform();
 		rcontext.PopModelMatrix();
 		platformHeight -= 0.025;
 		if (platformHeight <= 0.05) {
@@ -510,15 +481,14 @@ void OnDraw() {
 	}
 	if (stage == "wait2") {
 		rcontext.PushModelMatrix();
-		rcontext.RotateY(platformRotation);
-		rcontext.Translate(0, platformHeight, 0);
-		DrawPlatform();
+			rcontext.RotateY(platformRotation);
+			rcontext.Translate(0, platformHeight, 0);
+			DrawPlatform();
 		rcontext.PopModelMatrix();
 		if (waitTime < 25) {
 			waitTime += 0.5;
 		}
 		else {
-			//platformHeight = 0.1;
 			waitTime = 0;
 			stage = "slowascend";
 		}
@@ -552,7 +522,6 @@ void DrawPlatform() {
 		glBindTexture(GL_TEXTURE_2D, chairid);
 		rcontext.PushModelMatrix();
 		for (int i = 0; i < 360; i+=60) {
-			//rcontext.Translate(0.1, 0, 0);
 			rcontext.RotateY(i + platformRotation);
 			chair->Draw(rcontext);
 
@@ -593,7 +562,6 @@ void OnSize(DWORD type, UINT cx, UINT cy) {
 }
 
 void CleanUp() {
-	
 	delete model;
 	glDeleteProgram(glprogram);
 }
@@ -610,6 +578,40 @@ void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags) {
 		break;
 	case 40:
 		eye[1] -= 0.5;
+		OnDraw();
+		break; 
+	case 107:
+		eye[2] -= 0.1;
+		OnDraw();
+		break;
+	case 109:
+		eye[2] += 0.1;
+		OnDraw();
+		break;
+	//reset
+	case 82:
+		eye[0] = 0;
+		eye[1] = 0.2;
+		eye[2] = 1;
+		center[0] = 0;
+		center[1] = 0.55;
+		center[2] = 0;
+		up[0] = 0;
+		up[1] = 1;
+		up[2] = 0;
+		OnDraw();
+		break;
+	//top
+	case 84:
+		eye[0] = 0;
+		eye[1] = 1.5;
+		eye[2] = 0;
+		center[0] = 0;
+		center[1] = -0.55;
+		center[2] = 0;
+		up[0] = 0;
+		up[1] = 1;
+		up[2] = 0;
 		OnDraw();
 		break;
 		// Back Space
