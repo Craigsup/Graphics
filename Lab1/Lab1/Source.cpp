@@ -238,6 +238,14 @@ void CreateObjects() {
 	chair = modelObjects[5];
 
 	test = modelObjects[2];
+
+
+	eye[0] = 0;
+	eye[1] = 0.2;
+	eye[2] = 1;
+	center[0] = 0;
+	center[1] = 0.55;
+	center[2] = 0;
 }
 
 // This is called when the window needs to be redrawn
@@ -255,12 +263,12 @@ void OnDraw() {
 		center[2] = 0;
 	}
 	else {
-		eye[0] = 0;
+		/*eye[0] = 0;
 		eye[1] = 0.2;
 		eye[2] = 1;
 		center[0] = 0;
 		center[1] = 0.55;
-		center[2] = 0;
+		center[2] = 0;*/
 	}
 
 	rcontext.Scale(3.0f, 3.0f, 3.0f);
@@ -553,7 +561,7 @@ void DrawPlatform() {
 }
 
 void MultiplyMatrix(float* i, float* x) {
-	float temp[4];
+	float temp[3];
 	temp[0] = (x[0] * i[0]) + (x[1] * i[4]) + (x[2] * i[8]) + i[12];
 	temp[1] = (x[0] * i[1]) + (x[1] * i[5]) + (x[2] * i[9]) + i[13];
 	temp[2] = (x[0] * i[2]) + (x[1] * i[6]) + (x[2] * i[10]) + i[14];
@@ -563,23 +571,6 @@ void MultiplyMatrix(float* i, float* x) {
 	x[2] = temp[2];
 
 }
-
-void Rotate3Y(float* matrix, const float degs) {
-	float rads = DEGSTORADS(degs);
-	float sin = sinf(rads);
-	float cos = cosf(rads);
-	float t[4];
-	t[0] = cos*matrix[0] + sin * matrix[2];
-	t[1] = matrix[1];
-	t[2] = -sin * matrix[0] + cos * matrix[2];
-	t[3] = 0;
-
-	matrix[0] = t[0];
-	matrix[1] = t[1];
-	matrix[2] = t[2];
-	matrix[3] = t[3];
-}
-
 
 // Called when the window is resized
 void OnSize(DWORD type, UINT cx, UINT cy) {
@@ -688,12 +679,12 @@ void OnMouseMove(UINT nFlags, int x, int y) {
 		int dx = lastX - x;
 		int dy = lastY - y;
 
-		rotX = dx;
-		rotY = dy;
+		rotX = dy;
+		rotY = dx;
 
 		RotateMagic();
 		lastX = x;
-		lastY = y;
+		lastY = y; 
 	}
 }
 
@@ -705,6 +696,8 @@ void RotateMagic() {
 	Matrix::RotateY(identity, rotY);
  	Matrix::RotateX(identity, rotX);
 
+	//Matrix::Translate();
+	
 	MultiplyMatrix(identity, eye);
 	MultiplyMatrix(identity, up);
 }
